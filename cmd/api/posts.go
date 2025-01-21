@@ -90,6 +90,11 @@ func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusNoContent)
 }
 
+type UpdatePostPayload struct {
+	Title   string `json:"title" validate:"omitempty,max=100"`
+	Content string `json:"content" validate:"omitempty,max=1000"`
+}
+
 func (app *application) updatePosthandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromContext(r)
 
