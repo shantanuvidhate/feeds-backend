@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -97,6 +98,24 @@ type UpdatePostPayload struct {
 
 func (app *application) updatePosthandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromContext(r)
+
+	var payload UpdatePostPayload
+
+	if err := readJSON(w, r, &payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	if err := Validate.Struct(payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	log.Printf("Payload: %v", payload)
+	if err := app.store.Post.Update(r.Context(), post); err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
 
 	if err := writeJSON(w, http.StatusOK, post); err != nil {
 		app.internalServerError(w, r, err)
