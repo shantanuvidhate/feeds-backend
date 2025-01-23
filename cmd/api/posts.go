@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -92,8 +91,8 @@ func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request
 }
 
 type UpdatePostPayload struct {
-	Title   string `json:"title" validate:"omitempty,max=100"`
-	Content string `json:"content" validate:"omitempty,max=1000"`
+	Title   *string `json:"title" validate:"omitempty,max=100"`
+	Content *string `json:"content" validate:"omitempty,max=1000"`
 }
 
 func (app *application) updatePosthandler(w http.ResponseWriter, r *http.Request) {
@@ -111,8 +110,16 @@ func (app *application) updatePosthandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	log.Printf("Payload: %v", payload)
-	if err := app.store.Post.Update(r.Context(), post); err != nil {
+	if payload.Content != nil {
+		post.Content = *payload.Content
+	}
+	if payload.Title != nil {
+		post.Title = *payload.Title
+	}
+
+	ctx := r.Context()
+
+	if err := app.store.Post.Update(ctx, post); err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
@@ -141,19 +148,6 @@ func (app *application) postContextMiddleware(next http.Handler) http.Handler {
 			default:
 				app.internalServerError(w, r, err)
 			}
-			return
-		}
-
-		comments, err := app.store.Comment.GetByPostId(ctx, id)
-		if err != nil {
-			app.internalServerError(w, r, err)
-			return
-		}
-
-		post.Comments = comments
-
-		if err := writeJSON(w, http.StatusOK, post); err != nil {
-			app.internalServerError(w, r, err)
 			return
 		}
 
