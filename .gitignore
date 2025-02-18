@@ -27,3 +27,5 @@ go.work.sum
 
 # Database migrations/initilization scripts
 scripts/*.sql
+
+.idea
