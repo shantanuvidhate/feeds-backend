@@ -18,6 +18,12 @@ type Post struct {
 	UpdatedAt string    `json:"updated_at"`
 	Version   int       `json:"version"`
 	Comments  []Comment `json:"comments"`
+	User      User      `json:"user"`
+}
+
+type PostWithMetadata struct {
+	Post
+	CommentsCount int `json:"comments_count"`
 }
 
 type PostStore struct {
@@ -109,4 +115,8 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 
 	}
 	return err
+}
+
+func (s *PostStore) GetUserFeed(ctx context.Context, userId int64) ([]*PostWithMetadata, error) {
+	return nil, nil
 }
