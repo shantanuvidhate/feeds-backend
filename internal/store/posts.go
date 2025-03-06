@@ -120,12 +120,12 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 func (s *PostStore) GetUserFeed(ctx context.Context, userId int64) ([]PostWithMetadata, error) {
 	query := `SELECT p.id, p.user_id, p.title, p.content, p.created_at, p.version, p.tags, u.username, COUNT(c.id) AS comments_count
 				FROM posts p
-				Left JOIN comments c ON c.post_id = p.id
+				LEFT JOIN comments c ON c.post_id = p.id
 				LEFT JOIN users u ON p.user_id = u.id
 				JOIN followers f ON f.follower_id = p.user_id OR p.user_id = $1
 				WHERE f.user_id = $1 OR p.user_id = $1
-				Group BY p.id, u.username
-				order BY p.created_at DESC`
+				GROUP BY p.id, u.username
+				ORDER BY p.created_at DESC`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeOutDuration)
 	defer cancel()
