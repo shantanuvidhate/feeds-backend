@@ -1,4 +1,16 @@
 basePath: /v1
+definitions:
+  store.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      username:
+        type: string
+    type: object
 info:
   contact:
     email: support@swagger.io
@@ -10,7 +22,39 @@ info:
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
   title: Feed Backend API
-paths: {}
+paths:
+  /users/{userId}:
+    get:
+      consumes:
+      - application/json
+      description: Fetchs a user profile by user_id
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/store.User'
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Fetchs a user profile
+      tags:
+      - users
 securityDefinitions:
   ApiKeyAuth:
     in: header
