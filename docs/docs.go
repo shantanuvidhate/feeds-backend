@@ -72,6 +72,51 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users/{userId}/follow": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Follow a user by user_id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Follow a user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "User Followed",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "User payload missing",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {}
+                    }
+                }
+            }
         }
     },
     "definitions": {

@@ -39,6 +39,19 @@ type FollowUser struct {
 	UserID int64 `json:"user_id"`
 }
 
+// FollowUser godocs
+//
+//	@Summary		Follow a user
+//	@Description	Follow a user by user_id
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			userId	path		int		true	"User ID"
+//	@Success		204		{string}	string	"User Followed"
+//	@Failure		400		{object}	error	"User payload missing"
+//	@Failure		404		{object}	error	"User not found"
+//	@Security		ApiKeyAuth
+//	@Router			/users/{userId}/follow [put]
 func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request) {
 	followerUser := getUserFromContext(r)
 

@@ -55,6 +55,35 @@ paths:
       summary: Fetchs a user profile
       tags:
       - users
+  /users/{userId}/follow:
+    put:
+      consumes:
+      - application/json
+      description: Follow a user by user_id
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: User Followed
+          schema:
+            type: string
+        "400":
+          description: User payload missing
+          schema: {}
+        "404":
+          description: User not found
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Follow a user
+      tags:
+      - users
 securityDefinitions:
   ApiKeyAuth:
     in: header
