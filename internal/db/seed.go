@@ -191,7 +191,7 @@ func generateUsers(num int) []*store.User {
 		users[i] = &store.User{
 			Username: usernames[i%len(usernames)] + fmt.Sprintf("%d", i), // Add a number to make it unique
 			Email:    usernames[i] + "@email.com",
-			Password: "password@123",
+			// Password: "password@123",
 		}
 	}
 
