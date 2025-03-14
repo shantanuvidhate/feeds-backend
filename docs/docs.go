@@ -285,6 +285,48 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/activate/{token}": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Activates/Register a user by invitation token",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Activates/Register a user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Invitation token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "User activated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/users/feed": {
             "get": {
                 "security": [
@@ -581,6 +623,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "is_activated": {
+                    "type": "boolean"
+                },
                 "token": {
                     "type": "string"
                 },
@@ -708,6 +753,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "is_activated": {
+                    "type": "boolean"
                 },
                 "username": {
                     "type": "string"
