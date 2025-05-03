@@ -28,7 +28,7 @@ func (s *UserStore) Activate(ctx context.Context, token string) error {
 	})
 }
 func (s *UserStore) getUserFromInvitation(ctx context.Context, tx *sql.Tx, token string) (*User, error) {
-	query := `SELECT u.id, u.username, u.email, u.is_activated FROM users u JOIN user_invitations ui ON u.id = ui.user_id WHERE ui.token = $1 AND ui.expiry > $2`
+	query := `SELECT u.id, u.username, u.email, u.created_at, u.is_activated FROM users u JOIN user_invitations ui ON u.id = ui.user_id WHERE ui.token = $1 AND ui.expiry > $2`
 
 	hash := sha256.Sum256([]byte(token))
 	hashToken := hex.EncodeToString(hash[:])
@@ -40,6 +40,7 @@ func (s *UserStore) getUserFromInvitation(ctx context.Context, tx *sql.Tx, token
 		&user.ID,
 		&user.Username,
 		&user.Email,
+		&user.CreatedAt,
 		&user.IsActivated,
 	)
 
