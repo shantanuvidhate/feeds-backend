@@ -15,11 +15,12 @@ var (
 )
 
 type User struct {
-	ID        int64    `json:"id"`
-	Username  string   `json:"username"`
-	Email     string   `json:"email"`
-	Password  password `json:"-"`
-	CreatedAt string   `json:"created_at"`
+	ID          int64    `json:"id"`
+	Username    string   `json:"username"`
+	Email       string   `json:"email"`
+	Password    password `json:"-"`
+	CreatedAt   string   `json:"created_at"`
+	IsActivated bool     `json:"is_activated"`
 }
 
 type password struct {
@@ -70,7 +71,7 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 }
 
 func (s *UserStore) GetById(ctx context.Context, userId int64) (*User, error) {
-	query := `SELECT id, username, password, email, created_at FROM users WHERE id = $1`
+	query := `SELECT id, username, password, email, created_at, is_Activated FROM users WHERE id = $1`
 
 	ctx, cancle := context.WithTimeout(ctx, QueryTimeOutDuration)
 	defer cancle()
@@ -79,9 +80,10 @@ func (s *UserStore) GetById(ctx context.Context, userId int64) (*User, error) {
 	err := s.db.QueryRowContext(ctx, query, userId).Scan(
 		&user.ID,
 		&user.Username,
-		&user.Password,
+		&user.Password.hash,
 		&user.Email,
 		&user.CreatedAt,
+		&user.IsActivated,
 	)
 
 	if err != nil {
