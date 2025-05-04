@@ -3,10 +3,13 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/shantanuvidhate/feeds-backend/internal/mailer"
 	"github.com/shantanuvidhate/feeds-backend/internal/store"
+	"go.uber.org/zap"
 )
 
 type RegisterUserPayload struct {
@@ -75,14 +78,41 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	UserWithToken := UserWithToken{
+	userWithToken := UserWithToken{
 		User:  user,
 		Token: plainToken,
 	}
 
-	if err := app.jsonResponse(w, http.StatusCreated, UserWithToken); err != nil {
+	activationURL := fmt.Sprintf("%s/confirm/%s", app.config.frontendURL, plainToken)
+
+	isProdEnv := app.config.env == "production"
+
+	vars := struct {
+		Username      string
+		ActivationURL string
+	}{
+		Username:      user.Username,
+		ActivationURL: activationURL,
+	}
+	status, err := app.mailer.Send(mailer.UserWelcomeTemplate, user.Username, user.Email, vars, !isProdEnv)
+	if err != nil {
+		app.logger.Error("error sending welcome email",
+			zap.String("error", err.Error()))
+
+		// rollback user creation if email fails (SAGA pattern)
+		if err := app.store.User.Delete(ctx, user.ID); err != nil {
+			app.logger.Error("error deleting user after email failure",
+				zap.String("error", err.Error()))
+		}
+
 		app.internalServerError(w, r, err)
 		return
 	}
 
+	app.logger.Info("Email sent",
+		zap.String("status code", fmt.Sprintf("%d", status)))
+
+	if err := app.jsonResponse(w, http.StatusCreated, userWithToken); err != nil {
+		app.internalServerError(w, r, err)
+	}
 }

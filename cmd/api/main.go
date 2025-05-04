@@ -7,6 +7,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/shantanuvidhate/feeds-backend/internal/db"
 	"github.com/shantanuvidhate/feeds-backend/internal/env"
+	"github.com/shantanuvidhate/feeds-backend/internal/mailer"
 	"github.com/shantanuvidhate/feeds-backend/internal/store"
 	"go.uber.org/zap"
 )
@@ -38,8 +39,9 @@ func main() {
 	}
 
 	cfg := config{
-		addr:   env.GetString("ADDR", ":8080"),
-		apiURL: env.GetString("EXTERNAL_URL", "localhost:8080"),
+		addr:        env.GetString("ADDR", ":8080"),
+		apiURL:      env.GetString("EXTERNAL_URL", "localhost:8080"),
+		frontendURL: env.GetString("FRONTEND_URL", "http://localhost:3000"),
 		db: dbConfig{addr: env.GetString("DB_ADDR", "postgres://user:password@localhost:5432/feeds?sslmode=disable"),
 			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 30),
 			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 30),
@@ -47,7 +49,11 @@ func main() {
 		},
 		env: env.GetString("ENV", "development"),
 		mail: mailConfig{
-			exp: time.Hour * 24, // 24 hours
+			exp:      time.Hour * 24, // 24 hours
+			smtpUser: env.GetString("SMTP_USER", ""),
+			mailTrap: mailTrapConfig{
+				apiKey: env.GetString("MAILTRAP_API_KEY", "818f1f9243ae0e"),
+			},
 		},
 	}
 
@@ -63,11 +69,17 @@ func main() {
 	defer db.Close()
 	logger.Info("Database connection established")
 
+	mailtrap, err := mailer.NewMailTrapClient(cfg.mail.mailTrap.apiKey, cfg.mail.smtpUser)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+
 	store := store.NewStorage(db)
 	app := &application{
 		config: cfg,
 		store:  store,
 		logger: logger,
+		mailer: mailtrap,
 	}
 
 	mux := app.mount()
