@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/shantanuvidhate/feeds-backend/docs"
+	"github.com/shantanuvidhate/feeds-backend/internal/mailer"
 	"github.com/shantanuvidhate/feeds-backend/internal/store"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"go.uber.org/zap"
@@ -17,19 +18,28 @@ type application struct {
 	config config
 	store  store.Storage
 	logger *zap.Logger
+	mailer mailer.Client
 }
 
 type config struct {
-	addr   string
-	db     dbConfig
-	env    string
-	apiURL string
-	mail   mailConfig
+	addr        string
+	db          dbConfig
+	env         string
+	apiURL      string
+	mail        mailConfig
+	frontendURL string
 }
 
 type mailConfig struct {
-	exp time.Duration
+	mailTrap mailTrapConfig
+	smtpUser string
+	exp      time.Duration
 }
+
+type mailTrapConfig struct {
+	apiKey string
+}
+
 type dbConfig struct {
 	addr         string
 	maxOpenConns int
