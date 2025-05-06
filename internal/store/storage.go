@@ -23,6 +23,7 @@ type Storage struct {
 	}
 	User interface {
 		GetById(context.Context, int64) (*User, error)
+		GetByEmail(context.Context, string) (*User, error)
 		Create(context.Context, *sql.Tx, *User) error
 		CreateAndInvite(ctx context.Context, user *User, token string, expiry time.Duration) error
 		Activate(context.Context, string) error

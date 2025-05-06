@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/shantanuvidhate/feeds-backend/internal/auth"
 	"github.com/shantanuvidhate/feeds-backend/internal/db"
 	"github.com/shantanuvidhate/feeds-backend/internal/env"
 	"github.com/shantanuvidhate/feeds-backend/internal/mailer"
@@ -60,6 +61,12 @@ func main() {
 				user: env.GetString("BASIC_AUTH_USER", "admin"),
 				pass: env.GetString("BASIC_AUTH_PASS", "admin"),
 			},
+			token: authTokenConfig{
+				secret: env.GetString("JWT_SECRET", "secret"),
+				iss:    env.GetString("JWT_ISS", "http://localhost:8080"),
+				aud:    env.GetString("JWT_AUD", "http://localhost:8080"),
+				exp:    time.Hour * 24, // 24 hours
+			},
 		},
 	}
 
@@ -81,11 +88,18 @@ func main() {
 	}
 
 	store := store.NewStorage(db)
+
+	jwtAuthenticator := auth.NewJWTAuthenticator(
+		cfg.auth.token.secret,
+		cfg.auth.token.iss,
+		cfg.auth.token.aud,
+	)
 	app := &application{
-		config: cfg,
-		store:  store,
-		logger: logger,
-		mailer: mailtrap,
+		config:        cfg,
+		store:         store,
+		logger:        logger,
+		mailer:        mailtrap,
+		authenticator: jwtAuthenticator,
 	}
 
 	mux := app.mount()
