@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/shantanuvidhate/feeds-backend/docs"
+	"github.com/shantanuvidhate/feeds-backend/internal/auth"
 	"github.com/shantanuvidhate/feeds-backend/internal/mailer"
 	"github.com/shantanuvidhate/feeds-backend/internal/store"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -15,10 +16,11 @@ import (
 )
 
 type application struct {
-	config config
-	store  store.Storage
-	logger *zap.Logger
-	mailer mailer.Client
+	config        config
+	store         store.Storage
+	logger        *zap.Logger
+	mailer        mailer.Client
+	authenticator auth.Authenticator
 }
 
 type config struct {
@@ -33,7 +35,16 @@ type config struct {
 
 type authConfig struct {
 	basic authBasicConfig
+	token authTokenConfig
 }
+
+type authTokenConfig struct {
+	secret string
+	iss    string
+	aud    string
+	exp    time.Duration
+}
+
 type authBasicConfig struct {
 	user string
 	pass string
@@ -105,6 +116,7 @@ func (app *application) mount() http.Handler {
 		// Public Routes
 		r.Route("/authentication", func(r chi.Router) {
 			r.Post("/user", app.registerUserHandler)
+			r.Post("/token", app.createTokenHandler)
 		})
 	})
 
