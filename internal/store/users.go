@@ -166,3 +166,7 @@ func (s *UserStore) delete(ctx context.Context, tx *sql.Tx, id int64) error {
 
 	return nil
 }
+
+func (p *password) Compare(plainText string) error {
+	return bcrypt.CompareHashAndPassword(p.hash, []byte(plainText))
+}
