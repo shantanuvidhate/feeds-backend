@@ -67,3 +67,14 @@ func (app *application) unauthorizedErrorResponse(w http.ResponseWriter, r *http
 		zap.String("error", err.Error()))
 	writeJSONError(w, http.StatusUnauthorized, "unauthorized")
 }
+
+func (app *application) forbiddenResponse(w http.ResponseWriter, r *http.Request) {
+	// log.Printf("internal server error: %s path: %s error: %s", r.Method, r.URL.Path, err)
+
+	app.logger.Warn("forbidden",
+		zap.String("method", r.Method),
+		zap.String("path", r.URL.Path),
+		zap.String("error", "forbidden"),
+	)
+	writeJSONError(w, http.StatusForbidden, "forbidden")
+}
