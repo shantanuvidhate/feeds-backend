@@ -5,11 +5,13 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 	"github.com/shantanuvidhate/feeds-backend/internal/auth"
 	"github.com/shantanuvidhate/feeds-backend/internal/db"
 	"github.com/shantanuvidhate/feeds-backend/internal/env"
 	"github.com/shantanuvidhate/feeds-backend/internal/mailer"
 	"github.com/shantanuvidhate/feeds-backend/internal/store"
+	"github.com/shantanuvidhate/feeds-backend/internal/store/cache"
 	"go.uber.org/zap"
 )
 
@@ -48,6 +50,12 @@ func main() {
 			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 30),
 			maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
+		redisCfg: redisConfig{
+			addr:     env.GetString("REDIS_ADDR", "localhost:6379"),
+			password: env.GetString("REDIS_PASSWORD", "password"),
+			db:       env.GetInt("REDIS_DB", 0),
+			enabled:  env.GetBool("REDIS_ENABLED", true),
+		},
 		env: env.GetString("ENV", "development"),
 		mail: mailConfig{
 			exp:      time.Hour * 24, // 24 hours
@@ -82,12 +90,20 @@ func main() {
 	defer db.Close()
 	logger.Info("Database connection established")
 
+	// Redis
+	var rdb *redis.Client
+
+	if cfg.redisCfg.enabled {
+		rdb = cache.NewRedisClient(cfg.redisCfg.addr, cfg.redisCfg.password, cfg.redisCfg.db)
+		logger.Info("Redis connection established")
+	}
 	mailtrap, err := mailer.NewMailTrapClient(cfg.mail.mailTrap.apiKey, cfg.mail.smtpUser)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 
 	store := store.NewStorage(db)
+	cacheStorage := cache.NewRedisStorage(rdb)
 
 	jwtAuthenticator := auth.NewJWTAuthenticator(
 		cfg.auth.token.secret,
@@ -97,6 +113,7 @@ func main() {
 	app := &application{
 		config:        cfg,
 		store:         store,
+		cacheStorage:  cacheStorage,
 		logger:        logger,
 		mailer:        mailtrap,
 		authenticator: jwtAuthenticator,
