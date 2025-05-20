@@ -10,6 +10,7 @@ import (
 	"github.com/shantanuvidhate/feeds-backend/internal/db"
 	"github.com/shantanuvidhate/feeds-backend/internal/env"
 	"github.com/shantanuvidhate/feeds-backend/internal/mailer"
+	"github.com/shantanuvidhate/feeds-backend/internal/ratelimiter"
 	"github.com/shantanuvidhate/feeds-backend/internal/store"
 	"github.com/shantanuvidhate/feeds-backend/internal/store/cache"
 	"go.uber.org/zap"
@@ -76,6 +77,11 @@ func main() {
 				exp:    time.Hour * 24, // 24 hours
 			},
 		},
+		rateLimiter: ratelimiter.Config{
+			RequestPerTimeFrame: env.GetInt("REQUEST_PER_TIME_FRAME", 200),
+			TimeFrame:           time.Second * 5,
+			Enabled:             env.GetBool("RATE_LIMITER_ENABLED", true),
+		},
 	}
 
 	// Logger
@@ -102,6 +108,11 @@ func main() {
 		logger.Fatal(err.Error())
 	}
 
+	rateLimiter := ratelimiter.NewFixedWindowRateLimiter(
+		cfg.rateLimiter.RequestPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
+
 	store := store.NewStorage(db)
 	cacheStorage := cache.NewRedisStorage(rdb)
 
@@ -117,6 +128,7 @@ func main() {
 		logger:        logger,
 		mailer:        mailtrap,
 		authenticator: jwtAuthenticator,
+		rateLimiter:   rateLimiter,
 	}
 
 	mux := app.mount()
