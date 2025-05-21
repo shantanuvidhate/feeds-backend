@@ -1,7 +1,9 @@
 package main
 
 import (
+	"expvar"
 	"log"
+	"runtime"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -130,6 +132,22 @@ func main() {
 		authenticator: jwtAuthenticator,
 		rateLimiter:   rateLimiter,
 	}
+
+	expvar.NewString("version").Set(version)
+
+	expvar.Publish("database", expvar.Func(func() any {
+		return db.Stats()
+	}))
+
+	expvar.Publish("cache", expvar.Func(func() any {
+		if cfg.redisCfg.enabled {
+			return rdb.PoolStats()
+		}
+		return nil
+	}))
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
 
 	mux := app.mount()
 	logger.Fatal("Failed to start server", zap.Error(app.run(mux)))
